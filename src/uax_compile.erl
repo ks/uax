@@ -2,8 +2,6 @@
 
 -compile(export_all).
 
-%%
-
 
 c(Schema, NodeComp, LeafComp) ->
     uax_util:maptree(fun mk_node_env/2,
@@ -13,6 +11,8 @@ c(Schema, NodeComp, LeafComp) ->
 c_env(Schema) ->
     uax_util:maptree(fun mk_node_env/2, fun (Node, _Prev) -> Node end, Schema).
 
+operations() -> [new, get, put, del, typecheck].
+     
 %%
 
 %% nodes
@@ -79,8 +79,9 @@ mk_env({node, Type, Opt}) when not is_list(Opt) ->
                         end});
 mk_env({node, Type, Opts}) when is_list(Opts) ->
     Mod = uax:impl_mod(Type),
-    Opts1 = ensure_known_opts([none_tag, key, new, get, put, del, typecheck], Opts),
     MValidators = [_, _, _] = tuple_to_list(Mod:opts()),
+    Known = lists:concat([[element(1, T) || T <- Vs] || Vs <- MValidators]),
+    Opts1 = ensure_known_opts(Known, Opts),
     MOpts = [[O || {K, _} = O <- Opts1, proplists:is_defined(K, Validators)] ||
                 Validators <- MValidators],
     NoRequired = fun ({K, _}, _) -> erlang:error({schema_error, {missing, K}}) end,
@@ -101,7 +102,7 @@ mk_env({node, Type, Opts}) when is_list(Opts) ->
                  Fun when is_function(Fun, 1) ->
                      {F, Fun(Args)}
              end
-         end || F <- [new, get, put, del, typecheck]].
+         end || F <- operations()].
 
 
 ensure_known_opts(Known, Opts) ->
