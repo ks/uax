@@ -4,11 +4,13 @@
 
 -export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1]).
 
+
 opts() ->
-    {[], % required
+    {[{key, fun (F) -> is_function(F, 1) end}], % required
      [{none_tag, fun (_) -> true end, undefined}], % supplied when not present
-     [{key, fun (F) -> is_function(F, 1) end}, % checked when present
+     [{encode, fun (F) -> is_function(F, 1) end}, % checked when present
       {decode, fun (F) -> is_function(F, 1) end}]}.
+
                           
 args(new) -> [none_tag];
 args(del) -> [none_tag];

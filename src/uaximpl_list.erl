@@ -4,11 +4,15 @@
 
 -export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1]).
 
+
 opts() ->
     {[{key, fun (F) -> is_function(F, 1) end}],
      [{none_tag, fun (_) -> true end, undefined}],
-     [{decode, fun (F) -> is_function(F, 1) end}]}.
+     [{encode, fun (F) -> is_function(F, 1) end},
+      {decode, fun (F) -> is_function(F, 1) end}]}.
 
+
+args(put) -> [none_tag];
 args(_) -> [].
 
 get([]) ->

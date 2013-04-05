@@ -8,6 +8,7 @@ opts() ->
     {[],
      [],
      [{key, fun (F) -> is_function(F, 1) end},
+      {encode, fun (F) -> is_function(F, 1) end},
       {decode, fun (F) -> is_function(F, 1) end},
       {none_tag, fun (_) -> true end}]}.
 
