@@ -36,18 +36,18 @@ mk_get_fun(Flags) ->
     GetFlags2 = lists:foldl(fun proplists:delete/2, GetFlags1, [type, typecheck]),
     uax_get:mk_get_fun(GetFlags2).
 
-
-mk_put_fun(Flags) ->
-    mk_put_fun1(uax_compile:select_flags([put, encode], Flags)).
-
-mk_put_fun1([{put, Put}, {encode, Encode}]) ->
-    fun (Id, Val, Obj) -> Put(Id, Encode(Val), Obj) end;
-mk_put_fun1([{put, Put}]) ->
-    Put.
+mk_put_fun(Flags) -> uax_put:mk_put_fun(Flags).
 
 mk_new_fun(Flags) -> proplists:get_value(new, Flags).
 
-mk_del_fun(Flags) -> proplists:get_value(del, Flags).
+
+mk_del_fun(Flags) ->
+    mk_del_fun1(uax_compile:select_flags([del, key], Flags)).
+
+mk_del_fun1([{del, Del}, {key, Key}]) ->
+    fun (Id, Obj) -> Del(Key(Id), Obj) end;
+mk_del_fun1([{del, Del}]) ->
+    fun (Id, Obj) -> Del(Id, Obj) end.
 
 %%%%%%%%%%
 

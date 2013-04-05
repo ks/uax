@@ -39,8 +39,12 @@ mk_get_fun(Flags) ->
 
 
 mk_put_fun(Flags) ->
-    mk_put_fun1(uax_compile:select_flags([put, encode], Flags)).
+    mk_put_fun1(uax_compile:select_flags([put, key, encode], Flags)).
 
+mk_put_fun1([{put, Put}, {key, Key}, {encode, Encode}]) ->
+    fun (Id, Val, Obj) -> Put(Key(Id), Encode(Val), Obj) end;
+mk_put_fun1([{put, Put}, {key, Key}]) ->
+    fun (Id, Val, Obj) -> Put(Key(Id), Val, Obj) end;
 mk_put_fun1([{put, Put}, {encode, Encode}]) ->
     fun (Id, Val, Obj) -> Put(Id, Encode(Val), Obj) end;
 mk_put_fun1([{put, Put}]) ->
