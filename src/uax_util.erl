@@ -30,3 +30,16 @@ try_call(F, [Arg1, Arg2], Error) ->
 %% check_key_fun(F) -> erlang:error({schema_error, {key, F}}).
      
     
+fold_range(Fun, Acc, From, To) ->
+    fold_range(Fun, Acc, From, To, 1).
+
+fold_range(Fun, Acc, Idx, Limit, Step) when Idx < Limit ->
+    fold_range(Fun, Fun(Idx, Acc), Idx + Step, Limit, Step);
+fold_range(_Fun, Acc, Idx, Limit, _Step) when Idx >= Limit ->
+    Acc.
+
+
+    
+    
+
+    

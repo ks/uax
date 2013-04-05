@@ -19,7 +19,7 @@ mk(del, Schema) -> uax_del:compile(Schema).
              
 impls() ->
     [uaximpl_array, uaximpl_dict, uaximpl_gb_tree, uaximpl_list,
-     uaximpl_orddict, uaximpl_proplist, uaximpl_tuple].
+     uaximpl_orddict, uaximpl_proplist, uaximpl_tuple, uaximpl_kvlist].
 
 impl_mod(Type) when is_atom(Type) ->
     list_to_existing_atom("uaximpl_" ++ atom_to_list(Type)).
