@@ -15,7 +15,12 @@ opts() ->
 args(_) -> [].
 
 get([]) ->
-    fun (Key, Orddict) -> uax_get:try_get(fun orddict:fetch/2, Key, Orddict) end.
+    fun (Key, Orddict) ->
+            case orddict:find(Key, Orddict) of
+                {ok, Val} -> Val;
+                error -> erlang:error({not_found, Key})
+            end
+    end.
 
 put([]) ->
     fun orddict:store/3.
@@ -24,7 +29,7 @@ new([]) ->
     fun orddict:new/0.
 
 del([]) ->
-    fun () -> throw(todo) end.
+    fun orddict:erase/2.
 
 typecheck([]) ->
     fun erlang:is_list/1.
