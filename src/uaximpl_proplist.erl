@@ -8,6 +8,7 @@ opts() ->
     {[],
      [],
      [{key, fun (F) -> is_function(F, 1) end},
+      {encode, fun (F) -> is_function(F, 1) end},
       {decode, fun (F) -> is_function(F, 1) end},
       {none_tag, fun (_) -> true end}]}.
 
@@ -15,9 +16,10 @@ args(_) -> [].
      
 get([]) ->
     fun (Key, Proplist) ->
-            case lists:keyfind(Key, 1, Proplist) of
-                false -> erlang:error({not_found, Key});
-                Tuple -> element(2, Tuple)
+            Default = make_ref(),
+            case proplists:get_value(Key, Proplist, Default) of
+                Default -> erlang:error({not_found, Key});
+                Val -> Val
             end
     end.
 
@@ -28,7 +30,7 @@ new([]) ->
     fun () -> [] end.
 
 del([]) ->
-    fun (Key, Proplist) -> lists:keydelete(Key, 1, Proplist) end.
+    fun proplists:delete/2.
 
 typecheck([]) ->
     fun erlang:is_list/1.
