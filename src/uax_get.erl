@@ -13,8 +13,8 @@ c_flags(node) -> [type, typecheck, key, get, decode, none_tag].
 
 mk_fun({node, undefined, Kids}, _,
        [{type, Type}, {typecheck, Typecheck} | Flags]) ->
-    FinalGet = mk_get_fun(Flags),
-    Root = {Type, Typecheck, FinalGet},
+    Get = mk_get_fun(Flags),
+    Root = {Type, Typecheck, Get},
     %% result of compilation, to use by user:
     fun (Path, Obj) when is_list(Path) -> 
             eval(Path, Obj, {root, Root, Kids})
@@ -55,26 +55,26 @@ maybe_none_tag(Id, Val, NoneTag) ->
 
 %%%%%%%%%%
 
-eval([], Obj, {root, {Type, Typecheck, _FinalGet}, _Kids}) ->
+eval([], Obj, {root, {Type, Typecheck, _Get}, _Kids}) ->
     case Typecheck(Obj) of
         true -> Obj;
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval(Ps, Obj, {root, {Type, Typecheck, FinalGet}, Kids}) ->
+eval(Ps, Obj, {root, {Type, Typecheck, Get}, Kids}) ->
     case Typecheck(Obj) of
-        true -> eval(Ps, Obj, {node, root, FinalGet, Kids});
+        true -> eval(Ps, Obj, {node, root, Get, Kids});
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval([P | Ps], Obj, {node, _, FinalGet, Kids}) ->
+eval([P | Ps], Obj, {node, _, Get, Kids}) ->
     case {Ps, id_child(P, Kids)} of
         {[], {Id, {node, _, _, _}}} ->
-            FinalGet(Id, Obj);
+            Get(Id, Obj);
         {_, {Id, {node, _, _, _} = Next}} ->
-            eval(Ps, FinalGet(Id, Obj), Next);
+            eval(Ps, Get(Id, Obj), Next);
         {[], {Id, {leaf, _, LeafDecode}}} ->
-            LeafDecode(FinalGet(Id, Obj));
+            LeafDecode(Get(Id, Obj));
         {_, {_Id, _}} ->
             erlang:error({path_error, P})
     end.

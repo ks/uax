@@ -50,7 +50,7 @@ mk_new_fun(Flags) -> proplists:get_value(new, Flags).
 
 %%%%%%%%%%
 
-eval([], Val, Obj, {root, {Type, Typecheck, _FinalGet, _FinalPut, _New}, _Kids}) ->
+eval([], Val, Obj, {root, {Type, Typecheck, _Get, _Put, _New}, _Kids}) ->
     case Typecheck(Obj) of
         true ->
             case Typecheck(Val) of
@@ -67,7 +67,7 @@ eval(Ps, Val, Obj, {root, {Type, Typecheck, _, _, _} = Node, Kids}) ->
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval([P | Ps], Val, Obj, {node, _, {_Type, _Typecheck, FinalGet, FinalPut, New} = Flags, Kids}) ->
+eval([P | Ps], Val, Obj, {node, _, {_Type, _Typecheck, Get, Put, New} = Flags, Kids}) ->
     case {Ps, id_child(P, Kids)} of
         {[], {Id, {node, _, {NextType, NextTypecheck, _, _, _}, _}}} ->
             case NextTypecheck(Val) of
@@ -75,11 +75,11 @@ eval([P | Ps], Val, Obj, {node, _, {_Type, _Typecheck, FinalGet, FinalPut, New} 
                 false -> erlang:error({type_error, NextType, Val})
             end;
         {[], {Id, {leaf, _, {LeafEncode, _}}}} ->
-            FinalPut(Id, LeafEncode(Val), Obj);
+            Put(Id, LeafEncode(Val), Obj);
         {_, {Id, {node, _, _, _} = Next}} ->
-            Obj1 = do_get_or_new(Id, Obj, FinalGet, New),
+            Obj1 = do_get_or_new(Id, Obj, Get, New),
             RObj = eval(Ps, Val, Obj1, Next),
-            FinalPut(Id, RObj, Obj);
+            Put(Id, RObj, Obj);
         {_, {_Id, _}} ->
             erlang:error({path_error, P})
     end.
@@ -92,8 +92,8 @@ do_get_or_new(Id, Obj, Get, New) ->
         error:{not_found, _} -> New()
     end.
 
-do_put(Id, Val, Obj, {_Type, _Typecheck, FinalGet, FinalPut, New}) ->
-    FinalPut(Id, Val, do_get_or_new(Id, Obj, FinalGet, New)).
+do_put(Id, Val, Obj, {_Type, _Typecheck, Get, Put, New}) ->
+    Put(Id, Val, do_get_or_new(Id, Obj, Get, New)).
 
 
 id_child({Elem, Id}, Kids) when is_atom(Elem) ->

@@ -51,7 +51,7 @@ mk_del_fun(Flags) -> proplists:get_value(del, Flags).
 
 %%%%%%%%%%
 
-eval([], Obj, {root, {Type, Typecheck, _FinalGet, _FinalPut, New, _Del}, _Kids}) ->
+eval([], Obj, {root, {Type, Typecheck, _Get, _Put, New, _Del}, _Kids}) ->
     case Typecheck(Obj) of
         true -> New();
         false -> erlang:error({type_error, Type, Obj})
@@ -63,14 +63,14 @@ eval(Ps, Obj, {root, {Type, Typecheck, _, _, _, _} = Node, Kids}) ->
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval([P | Ps], Obj, {node, _, {_Type, _Typecheck, FinalGet, FinalPut, _New, Del} = _Flags, Kids}) ->
+eval([P | Ps], Obj, {node, _, {_Type, _Typecheck, Get, Put, _New, Del} = _Flags, Kids}) ->
     case {Ps, id_child(P, Kids)} of
         {[], {Id, _}} ->
             Del(Id, Obj);
         {_, {Id, {node, _, _, _} = Next}} ->
-            Obj1 = FinalGet(Id, Obj),
+            Obj1 = Get(Id, Obj),
             RObj = eval(Ps, Obj1, Next),
-            FinalPut(Id, RObj, Obj);
+            Put(Id, RObj, Obj);
         {_, {_Id, _}} ->
             erlang:error({path_error, P})
     end.
@@ -83,8 +83,8 @@ do_get_or_new(Id, Obj, Get, New) ->
         error:{not_found, _} -> New()
     end.
 
-do_put(Id, Val, Obj, {_Type, _Typecheck, FinalGet, FinalPut, New}) ->
-    FinalPut(Id, Val, do_get_or_new(Id, Obj, FinalGet, New)).
+do_put(Id, Val, Obj, {_Type, _Typecheck, Get, Put, New}) ->
+    Put(Id, Val, do_get_or_new(Id, Obj, Get, New)).
 
 
 id_child({Elem, Id}, Kids) when is_atom(Elem) ->
