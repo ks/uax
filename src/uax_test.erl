@@ -121,13 +121,29 @@ tt(6) ->
     %%           {b, {value, [{cc, valval}]}}]).
 
 
-%% {proplist,
-%%  [attr,
-%%   {e, 
-%%    {{tuple, fun (out) -> 1; (in) -> 2 end},
-%%     [{out, 
-%%       {gb_tree,
-%%        [{{id}, {proplist, [tgt]}}]}},
-%%      {in, 
-%%       {gb_tree,
-%%        [{{id}, {proplist, [{src, fun (V) -> V end}]}}]}}]}}]}.
+
+schema1() ->
+    ESchema = {{tuple, fun (out) -> 1; (in) -> 2 end},
+               [{out, {gb_tree,
+                       [{{id}, {{tuple, fun (tgt) -> 1; (attr) -> 2 end},
+                                [tgt, attr]}}]}}]},
+    
+    VSchema = {gb_tree,
+               [{{id}, {{tuple, fun (attr) -> 1; (e) -> 2 end},
+                        [attr, {e, ESchema}]}}]},
+    
+    GSchema = {{tuple, fun (v) -> 1 end},
+               [{v, VSchema}]},
+    
+    GSchema.
+
+
+%% ttt() ->
+    
+%%     %% Schema = schema1(),
+    
+%%     %% New = uax:mk(new, Schema),
+    
+%%     %% New([{v, [{{id}, [{<<"vtx1">>, {value, {}}}]}]}]).
+
+
