@@ -12,7 +12,7 @@ c_flags(node) -> [type, typecheck, key, get, decode, none_tag].
 
 
 mk_fun({node, undefined, Kids}, _,
-       [{type, Type}, {typecheck, Typecheck} | Flags]) ->
+       [{type, Type}, {typecheck, Typecheck} | _] = Flags) ->
     Get = mk_get_fun(Flags),
     Root = {Type, Typecheck, Get},
     %% result of compilation, to use by user:
@@ -20,7 +20,7 @@ mk_fun({node, undefined, Kids}, _,
             eval(Path, Obj, {root, Root, Kids})
     end;
 
-mk_fun({node, Elem, Kids}, _, [{type, _}, {typecheck, _} | Flags]) ->
+mk_fun({node, Elem, Kids}, _, Flags) ->
     {node, Elem, mk_get_fun(Flags), Kids};
 
 mk_fun({leaf, Elem}, _, [{decode, Decode}]) ->
@@ -29,24 +29,27 @@ mk_fun({leaf, Elem}, _, []) ->
     {leaf, Elem, fun uax_util:identity/1}.
 
 
-mk_get_fun([{key, Key}, {get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
+mk_get_fun(Flags) ->
+    mk_get_fun1(uax_compile:select_flags([key, get, decode, none_tag], Flags)).
+
+mk_get_fun1([{key, Key}, {get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
     fun (Id, Obj) -> maybe_none_tag(Id, Decode(Get(Key(Id), Obj)), NoneTag) end;
 %% {k,g,d} {k,g,n} {g,d,n}
-mk_get_fun([{key, Key}, {get, Get}, {decode_, Decode}]) ->
+mk_get_fun1([{key, Key}, {get, Get}, {decode_, Decode}]) ->
     fun (Id, Obj) -> Decode(Get(Key(Id), Obj)) end;
-mk_get_fun([{key, Key}, {get, Get}, {none_tag, NoneTag}]) ->
+mk_get_fun1([{key, Key}, {get, Get}, {none_tag, NoneTag}]) ->
     fun (Id, Obj) -> maybe_none_tag(Id, Get(Key(Id), Obj), NoneTag) end;
-mk_get_fun([{get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
+mk_get_fun1([{get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
     fun (Id, Obj) -> maybe_none_tag(Id, Decode(Get(Id, Obj)), NoneTag) end;
 %% {k,g} {g,d} {g,n}
-mk_get_fun([{key, Key}, {get, Get}]) ->
+mk_get_fun1([{key, Key}, {get, Get}]) ->
     fun (Id, Obj) -> Get(Key(Id), Obj) end;
-mk_get_fun([{get, Get}, {decode, Decode}]) ->
+mk_get_fun1([{get, Get}, {decode, Decode}]) ->
     fun (Id, Obj) -> Decode(Get(Id, Obj)) end;
-mk_get_fun([{get, Get}, {none_tag, NoneTag}]) ->
+mk_get_fun1([{get, Get}, {none_tag, NoneTag}]) ->
     fun (Id, Obj) -> maybe_none_tag(Id, Get(Id, Obj), NoneTag) end;
 %% {g}
-mk_get_fun([{get, Get}]) ->
+mk_get_fun1([{get, Get}]) ->
     Get.
 
 
@@ -73,8 +76,8 @@ eval([P | Ps], Obj, {node, _, Get, Kids}) ->
             Get(Id, Obj);
         {_, {Id, {node, _, _, _} = Next}} ->
             eval(Ps, Get(Id, Obj), Next);
-        {[], {Id, {leaf, _, LeafDecode}}} ->
-            LeafDecode(Get(Id, Obj));
+        {[], {Id, {leaf, _, Decode}}} ->
+            Decode(Get(Id, Obj));
         {_, {_Id, _}} ->
             erlang:error({path_error, P})
     end.

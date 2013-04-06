@@ -28,14 +28,12 @@ mk_fun({leaf, Elem}, _, Flags) ->
 
 
 mk_node([{type, Type}, {typecheck, Typecheck} | _] = Flags) ->
-    {Type, Typecheck, 
+    {Type, Typecheck,
      mk_get_fun(Flags), mk_put_fun(Flags), mk_new_fun(Flags)}.
 
 
 mk_get_fun(Flags) ->
-    GetFlags1 = uax_compile:select_flags(uax_get:c_flags(node), Flags),
-    GetFlags2 = lists:foldl(fun proplists:delete/2, GetFlags1, [type, typecheck]),
-    uax_get:mk_get_fun(GetFlags2).
+    uax_get:mk_get_fun(Flags).
 
 
 mk_put_fun(Flags) ->
@@ -49,6 +47,7 @@ mk_put_fun1([{put, Put}, {encode, Encode}]) ->
     fun (Id, Val, Obj) -> Put(Id, Encode(Val), Obj) end;
 mk_put_fun1([{put, Put}]) ->
     Put.
+
 
 mk_new_fun(Flags) -> proplists:get_value(new, Flags).
 
