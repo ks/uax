@@ -43,3 +43,9 @@
 %% @doc Selects best function according to compilation environment,
 %% which removes a key (when present) from a box, returning updated box.
 -callback typecheck(c_env()) -> fun ((Box :: any()) -> boolean()).
+
+
+-callback stream(c_env()) -> fun ((init | next, BoxOrState :: any()) -> 
+                                         {ok, State :: any()} | 
+                                         {ok, Elem :: any(), NewState :: any()} |
+                                         {done, LastState :: any()}).

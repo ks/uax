@@ -73,3 +73,11 @@ foldr(Fun, Acc, Tuple, Idx) when Idx > 0 ->
     foldr(Fun, Acc1, Tuple, Idx - 1);
 foldr(_Fun, Acc, _Tuple, Idx) when Idx < 1 ->
     Acc.
+
+
+%%%%%%%%%%
+
+tt() ->
+    {10} = (uax:mk(new, {{tuple, fun (v) -> 1 end}, [v]}))([{v, 10}]).
+
+    

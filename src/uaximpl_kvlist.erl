@@ -2,7 +2,7 @@
 
 -behaviour(uaximpl).
 
--export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1]).
+-export([opts/0, args/1, new/1, get/1, put/1, del/1, stream/1, typecheck/1]).
 
 opts() ->
     {[],
@@ -18,6 +18,7 @@ opts() ->
 args(get) -> [keypos, valpos];
 args(put) -> [keypos, valpos, fill_tag];
 args(del) -> [keypos];
+args(stream) -> [keypos, valpos];
 args(_) -> [].
 
 
@@ -54,6 +55,18 @@ new([]) ->
 
 del([{keypos, Keypos}]) ->
     fun (Key, KVlist) -> lists:keydelete(Key, Keypos, KVlist) end.
+
+
+stream([{keypos, Keypos}]) ->
+    fun (init, KVlist) -> {ok, KVlist};
+        (next, []) -> {done, []};
+        (next, [X | Xs]) -> {ok, {element(Keypos, X), X}, Xs}
+    end;
+stream([{keypos, Keypos}, {valpos, Valpos}]) ->
+    fun (init, KVlist) -> {ok, KVlist};
+        (next, []) -> {done, []};
+        (next, [X | Xs]) -> {ok, {element(Keypos, X), element(Valpos, X)}, Xs}
+    end.
 
 
 typecheck([]) ->
