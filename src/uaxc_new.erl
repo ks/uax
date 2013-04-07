@@ -1,71 +1,46 @@
--module(uax_new).
+-module(uaxc_new).
 
--compile(export_all).
+-behaviour(uaxc).
 
-%%%%%%%%%%
+-export([compile_keys/0, c/2]).
+-export([eval/2]).
 
-compile(Schema) ->
-    uax_compile:c(Schema, {c_flags(leaf), fun mk_fun/3}, {c_flags(node), fun mk_fun/3}).
-
-c_flags(leaf) -> [encode];
-c_flags(node) -> [type, typecheck, key, encode, none_tag, put, new].
-
-
-mk_fun({node, undefined, Kids}, _, [{type, Type}, {typecheck, Typecheck} | _] = Flags) ->
-    Node = mk_node(Flags),
-    %% result of compilation, to use by user:
-    fun ({value, Val}) ->
-            case Typecheck(Val) of
-                true -> Val;
-                false -> erlang:error({type_error, Type, Val})
-            end;
-        (PathVals) when is_list(PathVals) -> 
-            eval(PathVals, {root, Node, Kids})
-    end;
-
-mk_fun({node, Elem, Kids}, _, Flags) ->
-    {node, Elem, mk_node(Flags), Kids};
-
-mk_fun({leaf, Elem}, _, Flags) ->
-    {leaf, Elem, proplists:get_value(encode, Flags, fun uax_util:identity/1)}.
-
-
-mk_node([{type, Type}, {typecheck, Typecheck} | _] = Flags) ->
-    {Type, Typecheck, uax_put:mk_put_fun(Flags), mk_new_fun(Flags)}.
-
-mk_new_fun(Flags) -> proplists:get_value(new, Flags).
+-include("uax.hrl").
 
 %%%%%%%%%%
 
-eval(PathVals, {root, {_, _, _, _} = Node, Kids}) ->
-    eval(PathVals, {node, undefined, Node, Kids});
+compile_keys() -> [new].
 
-eval(PVs, {node, _, {_, _, _, New}, _} = Node) when is_list(PVs) ->
-    lists:foldl(fun (X, Obj) -> eval(X, Obj, Node) end, New(), PVs);
-eval({value, Val}, {node, _, {Type, Typecheck, _, _}, _}) ->
+c(_, [{new, New}]) -> New.
+
+%%%%%%%%%%
+
+eval({value, Val}, #uaxn{type = Type, typecheck = Typecheck}) ->
     case Typecheck(Val) of
         true -> Val;
         false -> erlang:error({type_error, Type, Val})
-    end.
+    end;
+eval(PVs, #uaxn{new = New} = X) when is_list(PVs) ->
+    lists:foldl(fun (PV, Obj) -> eval(PV, Obj, X) end, New(), PVs).
 
-eval({P, V}, Obj, {node, _, {_, _, Put, _}, Kids}) ->
+eval({P, V}, Obj, #uaxn{put = Put, kids = Kids}) ->
     case {child(P, Kids), V} of
         {false, _} ->
             erlang:error({path_error, P});
-        {{leaf, {_}, Encode}, Vs1} ->
+        {#uaxl{mode = multi, encode = Encode}, Vs1} ->
             is_list(Vs1) orelse erlang:error({value_error, Vs1}),
             lists:foldl(fun ({K1, V1}, Obj1) -> Put(K1, Encode(V1), Obj1) end, Obj, Vs1);
-        {{leaf, _, Encode}, _} ->
+        {#uaxl{mode = single, encode = Encode}, _} ->
             Put(P, Encode(V), Obj);
-        {{node, _, {Type1, Typecheck1, _, _}, _}, {value, V1}} ->
+        {#uaxn{type = Type1, typecheck = Typecheck1}, {value, V1}} ->
             case Typecheck1(V1) of
                 true -> Put(P, V1, Obj);
                 false -> erlang:error({type_error, Type1, V1})
             end;
-        {{node, {_}, {_, _, _, _}, _} = Next, Vs1} ->
+        {#uaxn{mode = multi} = Next, Vs1} ->
             is_list(Vs1) orelse erlang:error({type_error, Vs1, kvlist}),
             lists:foldl(fun ({K1, V1}, Obj1) -> Put(K1, eval(V1, Next), Obj1) end, Obj, Vs1);
-        {{node, _, _, _} = Next, Vs1} ->
+        {#uaxn{mode = single} = Next, Vs1} ->
             is_list(Vs1) orelse erlang:error({path_error, P}),
             Put(P, eval(Vs1, Next), Obj)
     end.

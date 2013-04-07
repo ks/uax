@@ -18,6 +18,17 @@ maptree(Down, Up, Tree, Prev) ->
 identity(X) -> X.
 
 
+position(Elem, List) when is_list(List) ->
+    position1(Elem, List, 1).
+
+position1(Elem, [], _I) ->
+    erlang:error({not_found, Elem});
+position1(Elem, [Elem | _], I) ->
+    I;
+position1(Elem, [_ | Xs], I) ->
+    position1(Elem, Xs, I + 1).
+
+
 try_call(F, [Arg1, Arg2], Error) ->
     try
         F(Arg1, Arg2)
@@ -39,7 +50,23 @@ fold_range(_Fun, Acc, Idx, Limit, _Step) when Idx >= Limit ->
     Acc.
 
 
-    
-    
+keyselect(Keys, KVs) ->
+    lists:foldr(
+      fun (K, KVs0) ->
+              case lists:keyfind(K, 1, KVs) of
+                  {K, V} -> [{K, V} | KVs0];
+                  false -> KVs0
+              end
+      end, [], Keys).
+
 
     
+
+%% 
+
+path_next({Elem, Id}, Kids) when is_atom(Elem) ->
+    {Id, lists:keyfind({Elem}, 2, Kids)};
+path_next(Elem, Kids) when is_atom(Elem) ->
+    {Elem, lists:keyfind(Elem, 2, Kids)};
+path_next(Elem, _Kids) ->
+    erlang:error({path_error, Elem}).
