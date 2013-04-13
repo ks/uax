@@ -17,7 +17,7 @@
                get :: fun (),
                put :: fun (),
                del :: fun (),
-               do  :: fun ()}).
+               iter  :: fun ()}).
 
 -record(uax, {root :: #uaxn{},
               new :: fun (() -> EmptyBox :: any()),

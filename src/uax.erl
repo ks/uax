@@ -6,6 +6,8 @@
 
 -export([new/2, get/3, put/4, del/3]).
 
+-export([iter/4]).
+
 -include("uax.hrl").
 
 %%%%%%%%%%
@@ -18,10 +20,12 @@ mk(Schema) ->
          put = mk_fun(put, Root),
          del = mk_fun(del, Root)}.
 
+
 mk(new, Schema) -> mk_fun(new, uaxc:compile(Schema));
 mk(get, Schema) -> mk_fun(get, uaxc:compile(Schema));
 mk(put, Schema) -> mk_fun(put, uaxc:compile(Schema));
 mk(del, Schema) -> mk_fun(del, uaxc:compile(Schema)).
+
 
 record_key(Fields) -> 
     fun (Key) -> uax_util:position(Key, Fields) + 1 end. %% TODO: make faster version by compiling from abstract form? 
@@ -40,6 +44,7 @@ del(#uax{root = Root}, Path, Obj) -> del(Root, Path, Obj);
 del(#uaxn{} = Root, Path, Obj) -> uaxc_del:eval(Root, Path, Obj).
 
 iter(#uax{root = Root}, Fun, State, Obj) -> iter(Root, Fun, State, Obj);
+iter(#uaxn{} = Root, Fun, State, Obj) -> uaxc_iter:eval(Root, Fun, State, Obj).
     
 %%%%%%%%%%
 

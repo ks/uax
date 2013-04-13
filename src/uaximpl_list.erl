@@ -2,7 +2,7 @@
 
 -behaviour(uaximpl).
 
--export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1]).
+-export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1, iter/1]).
 
 
 opts() ->
@@ -14,6 +14,7 @@ opts() ->
 
 args(put) -> [none_tag];
 args(del) -> [none_tag];
+args(iter) -> [none_tag];
 args(_) -> [].
 
 
@@ -33,7 +34,20 @@ typecheck([]) ->
     fun erlang:is_list/1.
 
 
+iter([{none_tag, NoneTag}]) ->
+    fun (init, List) -> {ok, {List, 1, NoneTag}};
+        (next, Iter) -> next(Iter)
+    end.
+
 %%
+
+next({[], _, _}) ->
+    done;
+next({[NoneTag | Xs], Pos, NoneTag}) ->
+    next({Xs, Pos + 1, NoneTag});
+next({[X | Xs], Pos, NoneTag}) ->
+    {ok, {Pos, X}, {Xs, Pos + 1, NoneTag}}.
+
 
 do_put_default(Idx, Val, List, NoneTag) ->
     (is_integer(Idx) andalso Idx > 0) orelse erlang:error(badarg),
@@ -42,8 +56,9 @@ do_put_default(Idx, Val, List, NoneTag) ->
           fun (_, {[X | Xs], Acc}) -> {Xs, [X | Acc]};
               (_, {[], Acc}) -> {[], [NoneTag | Acc]}
           end, {List, []}, 1, Idx),
-    lists:concat([lists:reverse(PrevReversedXs), [Val], RemXs]).
-
+    lists:concat([lists:reverse(PrevReversedXs), [Val], 
+                  if RemXs == [] -> []; true -> tl(RemXs) end]).
+                           
 
 do_del_default(Idx, List, NoneTag) ->
     (is_integer(Idx) andalso Idx > 0) orelse erlang:error(badarg),

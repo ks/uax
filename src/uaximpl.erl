@@ -19,33 +19,32 @@
 %% for compilation of a particular operation.
 -callback args(operation()) -> [modifier()].
 
+
+%%% @doc Each one of following callbacks accepts compilation environment,
+%%% to select best function for executing particular functionality.
                                     
-%% @doc Selects best function according to compilation environment,
-%% which creates empty box for a type implemented by backing module.
+%% @doc Returns function which creates empty box for a type implemented by backing module.
 -callback new(c_env()) -> fun (() -> EmptyBox :: any()).
      
 
-%% @doc Selects best function according to compilation environment,
-%% which fetches a value for a given key from the box.
+%% @doc Returns function which fetches a value for a given key from the box.
 -callback get(c_env()) -> fun ((Key :: any(), Box :: any()) -> Value :: any()).
      
 
-%% @doc Selects best function according to compilation environment,
-%% which associates a given key with a value and returns updated box.
+%% @doc Returns function which associates a given key with a value and returns updated box.
 -callback put(c_env()) -> fun ((Key :: any(), Val :: any(), Box :: any()) -> NewBox :: any()).
      
 
-%% @doc Selects best function according to compilation environment,
-%% which removes a key (when present) from a box, returning updated box.
+%% @doc Returns function which removes a key (when present) from a box, returning updated box.
 -callback del(c_env()) -> fun ((Key :: any(), Box :: any()) -> NewBox :: any()).
     
 
-%% @doc Selects best function according to compilation environment,
-%% which removes a key (when present) from a box, returning updated box.
+%% @doc Returns function which removes a key (when present) from a box, returning updated box.
 -callback typecheck(c_env()) -> fun ((Box :: any()) -> boolean()).
 
 
--callback stream(c_env()) -> fun ((init | next, BoxOrState :: any()) -> 
-                                         {ok, State :: any()} | 
-                                         {ok, Elem :: any(), NewState :: any()} |
-                                         {done, LastState :: any()}).
+%% @doc Returns function which follows iteration protocol and return elements on demand.
+-callback iter(c_env()) -> fun ((init | next, BoxOrState :: any()) -> 
+                                       {ok, State :: any()} | 
+                                       {ok, Elem :: any(), NewState :: any()} |
+                                       {done, LastState :: any()}).

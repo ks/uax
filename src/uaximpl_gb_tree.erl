@@ -2,7 +2,7 @@
 
 -behaviour(uaximpl).
 
--export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1]).
+-export([opts/0, args/1, new/1, get/1, put/1, del/1, typecheck/1, iter/1]).
 
 opts() ->
     {[],
@@ -37,3 +37,18 @@ typecheck([]) ->
         (_) -> false
     end.
 
+iter([]) ->
+    fun (init, Gbtree) -> {ok, gb_trees:iterator(Gbtree)};
+        (next, Iter) -> next(Iter)
+    end.
+
+%%
+
+next(Iter) ->
+    case gb_trees:next(Iter) of
+        none -> done;
+        {K, V, Iter1} -> {ok, {K, V}, Iter1}
+    end.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
