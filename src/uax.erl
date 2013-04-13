@@ -26,16 +26,29 @@ mk(del, Schema) -> mk_fun(del, uaxc:compile(Schema)).
 record_key(Fields) -> 
     fun (Key) -> uax_util:position(Key, Fields) + 1 end. %% TODO: make faster version by compiling from abstract form? 
 
-new(PathVals, Root) -> uaxc_new:eval(PathVals, Root).
-get(Path, Obj, Root) -> uaxc_get:eval(Path, Obj, Root).
-put(Path, Val, Obj, Root) -> uaxc_put:eval(Path, Val, Obj, Root).
-del(Path, Obj, Root) -> uaxc_del:eval(Path, Obj, Root).
+
+new(#uax{root = Root}, PathVals) -> new(Root, PathVals);
+new(#uaxn{} = Root, PathVals) -> uaxc_new:eval(Root, PathVals).
+
+get(#uax{root = Root}, Path, Obj) -> get(Root, Path, Obj);
+get(#uaxn{} = Root, Path, Obj) -> uaxc_get:eval(Root, Path, Obj).
+
+put(#uax{root = Root}, Path, Val, Obj) -> put(Root, Path, Val, Obj);
+put(#uaxn{} = Root, Path, Val, Obj) -> uaxc_put:eval(Root, Path, Val, Obj).
+
+del(#uax{root = Root}, Path, Obj) -> del(Root, Path, Obj);
+del(#uaxn{} = Root, Path, Obj) -> uaxc_del:eval(Root, Path, Obj).
+
+iter(#uax{root = Root}, Fun, State, Obj) -> iter(Root, Fun, State, Obj);
     
 %%%%%%%%%%
 
-mk_fun(new, Root) -> fun (PathVals) -> new(PathVals, Root) end;
-mk_fun(get, Root) -> fun (Path, Obj) -> get(Path, Obj, Root) end;
-mk_fun(put, Root) -> fun (Path, Val, Obj) -> put(Path, Val, Obj, Root) end;
-mk_fun(del, Root) -> fun (Path, Obj) -> del(Path, Obj, Root) end.
+%%
+mk_fun(new, Root) -> fun (PathVals) -> new(Root, PathVals) end;
+mk_fun(get, Root) -> fun (Path, Obj) -> get(Root, Path, Obj) end;
+mk_fun(put, Root) -> fun (Path, Val, Obj) -> put(Root, Path, Val, Obj) end;
+mk_fun(del, Root) -> fun (Path, Obj) -> del(Root, Path, Obj) end.
+
+                               
                              
 

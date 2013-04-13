@@ -22,7 +22,7 @@ c(_, [{put, Put}]) ->
 
 %%%%%%%%%%
 
-eval([], Val, Obj, #uaxn{type = Type, typecheck = Typecheck}) ->
+eval(#uaxn{type = Type, typecheck = Typecheck}, [], Val, Obj) ->
     case Typecheck(Obj) of
         true ->
             case Typecheck(Val) of
@@ -33,13 +33,13 @@ eval([], Val, Obj, #uaxn{type = Type, typecheck = Typecheck}) ->
             erlang:error({type_error, Type, Obj})
     end;
 
-eval(Ps, Val, Obj, #uaxn{type = Type, typecheck = Typecheck} = X) ->
+eval(#uaxn{type = Type, typecheck = Typecheck} = X, Ps, Val, Obj) ->
     case Typecheck(Obj) of
-        true -> eval0(Ps, Val, Obj, X);
+        true -> eval0(X, Ps, Val, Obj);
         false -> erlang:error({type_error, Type, Obj})
     end.
 
-eval0([P | Ps], Val, Obj, #uaxn{get = Get, put = Put, new = New, kids = Kids}) ->
+eval0(#uaxn{get = Get, put = Put, new = New, kids = Kids}, [P | Ps], Val, Obj) ->
     case {Ps, uax_util:path_next(P, Kids)} of
         {[], {Id, #uaxn{type = NextType, typecheck = NextTypecheck}}} ->
             case NextTypecheck(Val) of
@@ -50,7 +50,7 @@ eval0([P | Ps], Val, Obj, #uaxn{get = Get, put = Put, new = New, kids = Kids}) -
             Put(Id, Encode(Val), Obj);
         {_, {Id, #uaxn{} = Next}} ->
             Obj1 = do_get_or_new(Id, Obj, Get, New),
-            RObj = eval0(Ps, Val, Obj1, Next),
+            RObj = eval0(Next, Ps, Val, Obj1),
             Put(Id, RObj, Obj);
         {_, {_Id, _}} ->
             erlang:error({path_error, P})

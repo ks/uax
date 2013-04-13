@@ -9,8 +9,7 @@
 
 -export([compile/1, c/2, 
          env/1, sub_env/2, 
-         ops/0, op_mod/1, 
-         types/0, type_mod/1]).
+         ops/0, op_mod/1, type_mod/1, impls/1]).
 
 %%%%%%%%%%
 
@@ -60,10 +59,10 @@ parse(BadSchema, _Prev) ->
 
 construct({node, #uaxn{env = E} = X, Kids}, _Prev) ->
     Typecheck = proplists:get_value(typecheck, E),
-    [New, Get, Put, Del] = [c(Op, X) || Op <- ops()],
+    [New, Get, Put, Del, Iter] = [c(Op, X) || Op <- ops()],
     X#uaxn{kids = Kids, 
            typecheck = Typecheck,
-           new = New, get = Get, put = Put, del = Del};
+           new = New, get = Get, put = Put, del = Del, iter = Iter};
 
 construct({leaf, #uaxl{env = E} = X}, _Prev) ->
     I = fun uax_util:identity/1,
@@ -78,18 +77,19 @@ sub_env(Op, #uaxn{env = Env}) ->
     uax_util:keyselect((op_mod(Op)):compile_keys(), Env).
 
 
-ops() -> [new, get, put, del].
+ops() -> [new, get, put, del, iter].
 
 op_mod(Op) when is_atom(Op) ->
     list_to_existing_atom("uaxc_" ++ atom_to_list(Op)).
 
-
-types() ->
-    [uaximpl_array, uaximpl_dict, uaximpl_gb_tree, uaximpl_list,
-     uaximpl_orddict, uaximpl_proplist, uaximpl_tuple, uaximpl_kvlist].
-
 type_mod(Type) when is_atom(Type) ->
     list_to_existing_atom("uaximpl_" ++ atom_to_list(Type)).
+
+impls(type) ->
+    [uaximpl_array, uaximpl_dict, uaximpl_gb_tree, uaximpl_list,
+     uaximpl_orddict, uaximpl_proplist, uaximpl_tuple, uaximpl_kvlist];
+impls(op) ->
+    [uaxc_new, uaxc_get, uaxc_put, uaxc_del, uaxc_iter].
 
 %%
 

@@ -36,24 +36,24 @@ maybe_none_tag(Id, Val, NoneTag) ->
 
 %%%%%%%%%%
 
-eval([], Obj, #uaxn{type = Type, typecheck = Typecheck}) ->
+eval(#uaxn{type = Type, typecheck = Typecheck}, [], Obj) ->
     case Typecheck(Obj) of
         true -> Obj;
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval(Ps, Obj, #uaxn{type = Type, typecheck = Typecheck} = X) ->
+eval(#uaxn{type = Type, typecheck = Typecheck} = X, Ps, Obj) ->
     case Typecheck(Obj) of
-        true -> eval0(Ps, Obj, X);
+        true -> eval0(X, Ps, Obj);
         false -> erlang:error({type_error, Type, Obj})
     end.
 
-eval0([P | Ps], Obj, #uaxn{get = Get, kids = Kids}) ->
+eval0(#uaxn{get = Get, kids = Kids}, [P | Ps], Obj) ->
     case {Ps, uax_util:path_next(P, Kids)} of
         {[], {Id, #uaxn{}}} ->
             Get(Id, Obj);
         {_, {Id, #uaxn{} = Next}} ->
-            eval0(Ps, Get(Id, Obj), Next);
+            eval0(Next, Ps, Get(Id, Obj));
         {[], {Id, #uaxl{decode = Decode}}} ->
             Decode(Get(Id, Obj));
         {_, {_Id, _}} ->

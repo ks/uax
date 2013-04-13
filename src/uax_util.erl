@@ -37,6 +37,13 @@ try_call(F, [Arg1, Arg2], Error) ->
     end.
 
 
+try_get(Get, K, KVs) ->
+    try Get(K, KVs) of
+        V -> V
+    catch
+        _:_ -> erlang:error({not_found, K})
+    end.
+
 %% check_key_fun(F) when is_function(F, 1) -> F;
 %% check_key_fun(F) -> erlang:error({schema_error, {key, F}}).
      
@@ -60,7 +67,16 @@ keyselect(Keys, KVs) ->
       end, [], Keys).
 
 
-    
+
+find_elem_ix(_Test, _Tuple, Ix, MaxIx) when Ix > MaxIx -> 
+    none;
+find_elem_ix(Test, Tuple, Ix, MaxIx) ->
+    E = element(Ix, Tuple),
+    case Test(E) of
+        true  -> {ok, Ix, E};
+        false -> find_elem_ix(Test, Tuple, Ix + 1, MaxIx)
+    end.
+       
 
 %% 
 

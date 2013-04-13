@@ -15,15 +15,15 @@ c(_, [{new, New}]) -> New.
 
 %%%%%%%%%%
 
-eval({value, Val}, #uaxn{type = Type, typecheck = Typecheck}) ->
+eval(#uaxn{type = Type, typecheck = Typecheck}, {value, Val}) ->
     case Typecheck(Val) of
         true -> Val;
         false -> erlang:error({type_error, Type, Val})
     end;
-eval(PVs, #uaxn{new = New} = X) when is_list(PVs) ->
-    lists:foldl(fun (PV, Obj) -> eval(PV, Obj, X) end, New(), PVs).
+eval(#uaxn{new = New} = X, PVs) when is_list(PVs) ->
+    lists:foldl(fun (PV, Obj) -> eval(X, PV, Obj) end, New(), PVs).
 
-eval({P, V}, Obj, #uaxn{put = Put, kids = Kids}) ->
+eval(#uaxn{put = Put, kids = Kids}, {P, V}, Obj) ->
     case {child(P, Kids), V} of
         {false, _} ->
             erlang:error({path_error, P});
@@ -39,10 +39,10 @@ eval({P, V}, Obj, #uaxn{put = Put, kids = Kids}) ->
             end;
         {#uaxn{mode = multi} = Next, Vs1} ->
             is_list(Vs1) orelse erlang:error({type_error, Vs1, kvlist}),
-            lists:foldl(fun ({K1, V1}, Obj1) -> Put(K1, eval(V1, Next), Obj1) end, Obj, Vs1);
+            lists:foldl(fun ({K1, V1}, Obj1) -> Put(K1, eval(Next, V1), Obj1) end, Obj, Vs1);
         {#uaxn{mode = single} = Next, Vs1} ->
             is_list(Vs1) orelse erlang:error({path_error, P}),
-            Put(P, eval(Vs1, Next), Obj)
+            Put(P, eval(Next, Vs1), Obj)
     end.
 
 

@@ -18,25 +18,25 @@ c(_, [{del, Del}]) ->
 
 %%%%%%%%%%
 
-eval([], Obj, #uaxn{type = Type, typecheck = Typecheck, new = New}) ->
+eval(#uaxn{type = Type, typecheck = Typecheck, new = New}, [], Obj) ->
     case Typecheck(Obj) of
         true -> New();
         false -> erlang:error({type_error, Type, Obj})
     end;
 
-eval(Ps, Obj, #uaxn{type = Type, typecheck = Typecheck} = X) ->
+eval(#uaxn{type = Type, typecheck = Typecheck} = X, Ps, Obj) ->
     case Typecheck(Obj) of
-        true -> eval0(Ps, Obj, X);
+        true -> eval0(X, Ps, Obj);
         false -> erlang:error({type_error, Type, Obj})
     end.
 
-eval0([P | Ps], Obj, #uaxn{get = Get, put = Put, del = Del, kids = Kids}) ->
+eval0(#uaxn{get = Get, put = Put, del = Del, kids = Kids}, [P | Ps], Obj) ->
     case {Ps, uax_util:path_next(P, Kids)} of
         {[], {Id, _}} ->
             Del(Id, Obj);
         {_, {Id, #uaxn{} = Next}} ->
             Obj1 = Get(Id, Obj),
-            RObj = eval0(Ps, Obj1, Next),
+            RObj = eval0(Next, Ps, Obj1),
             Put(Id, RObj, Obj);
         {_, {_Id, _}} ->
             erlang:error({path_error, P})
