@@ -78,3 +78,68 @@ up(Prev, NT, VT) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-define(EUNIT, true).
+
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+
+get_test_() ->
+    Get1 = uax:mk(get, {{array, fun (a) -> 0 end}, [a]}),
+
+    [?_assertError({schema_error, {missing, key}}, uax:mk(get, {array, [a]})),
+     ?_assertEqual(val, Get1([a], obj1(0, val)))].
+
+put_test_() ->
+    Put1 = uax:mk(put, {{array, fun (a) -> 0 end}, [a]}),
+
+    Obj0 = array:new(),
+    
+    [?_assertEqual(obj1(0, val), Put1([a], val, Obj0))].
+
+new_test_() ->
+    New1 = uax:mk(new, {{array, fun (a) -> 0 end}, [a]}),
+    
+    [?_assertEqual(obj1(0, val), New1([{a, val}]))].
+
+del_test_() ->
+    Get1 = uax:mk(get, {{array, fun (a) -> 0 end}, [a]}),
+    Del1 = uax:mk(del, {{array, fun (a) -> 0 end}, [a]}),
+
+    [?_assertError({not_found, 0}, Get1([a], Del1([a], obj1(0, val))))].
+    
+typecheck_test_() ->
+    Typecheck = typecheck([]),
+
+    [?_assertEqual(true, Typecheck(array:new())),
+     ?_assertEqual(true, Typecheck(objn([{0, a}, {1, b}]))),
+     ?_assertEqual(false, Typecheck(not_array))].
+
+iter_test_() ->
+    R1 = uaxc:compile({{array, fun (X) -> X end}, [{id}]}),
+    
+    Obj1 = objn([{X, X} || X <- lists:seq(1, 100)]),
+    
+    Del = del([{none_tag, Obj1#array.default}]),
+                         
+    [?_assertEqual(
+        [],
+        [X || X <- array:to_list(
+                     uax:iter(R1, fun (K, V, State) ->
+                                          true = K == V, 
+                                          {ok, Del(K, State)}
+                                  end, Obj1, Obj1)),
+              X /= Obj1#array.default])].
+
+
+obj1(K, V) -> obj1(K, V, undefined).
+obj1(K, V, Default) -> objn([{K, V}], Default).
+
+objn(KVs) -> 
+    objn(KVs, undefined).
+objn(KVs, Default) ->
+    Array = array:new([{default, Default}]),
+    lists:foldl(fun ({K, V}, A) -> array:set(K, V, A) end, Array, KVs).
+
+
+-endif.

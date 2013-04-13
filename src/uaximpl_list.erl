@@ -65,3 +65,63 @@ do_del_default(Idx, List, NoneTag) ->
     do_put_default(Idx, NoneTag, List, NoneTag).
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-define(EUNIT, true).
+
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+
+get_test_() ->
+    Get1 = uax:mk(get, {{list, fun (a) -> 1 end}, [a]}),
+    
+    [?_assertEqual(val, Get1([a], obj1(1, val)))].
+
+put_test_() ->
+    Put1 = uax:mk(put, {{list, fun (a) -> 1 end}, [a]}),
+    
+    Obj0 = [],
+    
+    [?_assertEqual(obj1(1, val), Put1([a], val, Obj0))].
+
+new_test_() ->
+    New1 = uax:mk(new, {{list, fun (a) -> 1 end}, [a]}),
+    
+    [?_assertEqual(obj1(1, val), New1([{a, val}]))].
+
+del_test_() ->
+    Del1 = uax:mk(del, {{list, fun (a) -> 1 end}, [a]}),
+    
+    [?_assertEqual([undefined], Del1([a], obj1(1, val)))].
+    
+typecheck_test_() ->
+    Typecheck = typecheck([]),
+
+    [?_assertEqual(true, Typecheck([])),
+     ?_assertEqual(true, Typecheck([something])),
+     ?_assertEqual(false, Typecheck(not_list))].
+
+
+iter_test_() ->
+    R1 = uaxc:compile({{list, fun (X) -> X end}, [{a}]}),
+    
+    Obj1 = objn(lists:seq(1, 100)),
+    
+    Del = fun (K, L) -> do_del_default(K, L, undefined) end,
+    
+    [?_assertEqual(lists:duplicate(100, undefined),
+                   uax:iter(R1, fun (K, V, State) ->
+                                        true = K == V,
+                                        {ok, Del(K, State)}
+                                end, Obj1, Obj1))].
+
+
+obj1(K, V) -> do_put_default(K, V, [], undefined).
+
+objn(L) -> L.
+
+
+
+-endif.
+
+

@@ -76,3 +76,75 @@ iter([{keypos, Keypos}, {valpos, Valpos}]) ->
 
 typecheck([]) ->
     fun erlang:is_list/1.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-define(EUNIT, true).
+
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+
+get_test_() ->
+    Get1 = uax:mk(get, {kvlist, [a]}),                  %% returns whole tuple
+    Get2 = uax:mk(get, {{kvlist, [{valpos, 2}]}, [a]}), %% returns specific tuple element as value
+    
+    [?_assertEqual({a, val}, Get1([a], obj1(a, val))),
+     ?_assertEqual(val, Get2([a], obj1(a, val)))].
+
+put_test_() ->
+    Put1 = uax:mk(put, {kvlist, [a]}),
+    Put2 = uax:mk(put, {{kvlist, [{valpos, 2}]}, [a]}),
+    
+    Obj0 = [],
+    
+    [?_assertEqual(obj1(a, val), Put1([a], {a, val}, Obj0)),
+     ?_assertEqual(obj1(a, val), Put2([a], val, Obj0))].
+
+new_test_() ->
+    New1 = uax:mk(new, {kvlist, [a]}),
+    New2 = uax:mk(new, {{kvlist, [{valpos, 2}]}, [a]}),
+    
+    [?_assertEqual(obj1(a, val), New1([{a, {a, val}}])), %% value here must contain the key, Put function checks that (otherwise it will become unreachable)
+     ?_assertEqual(obj1(a, val), New2([{a, val}]))].
+
+del_test_() ->
+    Del1 = uax:mk(del, {kvlist, [a]}),
+
+    Obj0 = [],
+    
+    [?_assertEqual(Obj0, Del1([a], obj1(a, val)))].
+    
+
+typecheck_test_() ->
+    Typecheck = typecheck([]),
+
+    [?_assertEqual(true, Typecheck([])),
+     ?_assertEqual(true, Typecheck([{key, val}])),
+     ?_assertEqual(false, Typecheck(not_kvlist))].
+
+
+iter_test_() ->
+    R1 = uaxc:compile({kvlist, [a]}),
+    R2 = uaxc:compile({{kvlist, [{valpos, 2}]}, [a]}),
+                         
+    Obj1 = objn([{X, X} || X <- lists:seq(1, 100)]),
+    
+    Del = fun (K, T) -> lists:keydelete(K, 1, T) end,
+    
+    [?_assertEqual([], uax:iter(R1, fun (K, V, State) ->
+                                            true = {K, K} == V,
+                                            {ok, Del(K, State)}
+                                    end, Obj1, Obj1)),
+     ?_assertEqual([], uax:iter(R2, fun (K, V, State) ->
+                                            true = K == V, 
+                                            {ok, Del(K, State)}
+                                    end, Obj1, Obj1))].
+
+
+obj1(K, V) -> [{K, V}].
+
+objn(KVs) -> KVs.
+
+
+-endif.
