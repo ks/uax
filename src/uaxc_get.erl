@@ -12,12 +12,18 @@
 compile_keys() -> [key, get, decode, none_tag].
 
 c(_, [{key, Key}, {get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
-    fun (Id, Obj) -> maybe_none_tag(Id, Decode(Get(Key(Id), Obj)), NoneTag) end;
+    fun (Id, Obj) -> 
+            Id1 = Key(Id), 
+            maybe_none_tag(Id1, Decode(Get(Id1, Obj)), NoneTag) 
+    end;
 %% {k,g,d} {k,g,n} {g,d,n}
-c(_, [{key, Key}, {get, Get}, {decode_, Decode}]) ->
+c(_, [{key, Key}, {get, Get}, {decode, Decode}]) ->
     fun (Id, Obj) -> Decode(Get(Key(Id), Obj)) end;
 c(_, [{key, Key}, {get, Get}, {none_tag, NoneTag}]) ->
-    fun (Id, Obj) -> maybe_none_tag(Id, Get(Key(Id), Obj), NoneTag) end;
+    fun (Id, Obj) -> 
+            Id1 = Key(Id), 
+            maybe_none_tag(Id1, Get(Id1, Obj), NoneTag)
+    end;
 c(_, [{get, Get}, {decode, Decode}, {none_tag, NoneTag}]) ->
     fun (Id, Obj) -> maybe_none_tag(Id, Decode(Get(Id, Obj)), NoneTag) end;
 %% {k,g} {g,d} {g,n}

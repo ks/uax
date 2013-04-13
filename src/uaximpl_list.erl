@@ -19,16 +19,16 @@ args(_) -> [].
 
 
 get([]) ->
-    fun (Pos, List) -> uax_get:try_get(fun lists:nth/2, Pos, List) end.
+    fun (Pos, List) -> uax_util:try_get(fun lists:nth/2, Pos, List) end.
 
 put([{none_tag, NoneTag}]) ->
-    fun (Idx, Val, List) -> do_put_default(Idx, Val, List, NoneTag) end.
+    fun (Pos, Val, List) -> do_put_default(Pos, Val, List, NoneTag) end.
 
 new([]) ->
     fun () -> [] end.
 
 del([{none_tag, NoneTag}]) ->
-    fun (Idx, List) -> do_del_default(Idx, List, NoneTag) end.
+    fun (Pos, List) -> do_del_default(Pos, List, NoneTag) end.
 
 typecheck([]) ->
     fun erlang:is_list/1.

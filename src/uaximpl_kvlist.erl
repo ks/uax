@@ -1,4 +1,9 @@
--module(uaximpl_kvlist).
+%% KVList differ from other impls, that the value it returns with default schema (without {valpos, pos_integer()})
+%% returns whole tuple (with the key) as value to not lose information if tuple contains other elemens.
+%% 
+%% To get same behavior as other impls, use {valpos, pos_integer()} which works with a specific tuple element instead.
+
+-module(uaximpl_kvlist). 
 
 -behaviour(uaximpl).
 
@@ -38,8 +43,8 @@ get([{keypos, Keypos}, {valpos, Valpos}]) ->
     end.
 
 
-put([{keypos, _Keypos}, {fill_tag, _FillTag}]) ->
-    fun (_Key, Val, KVlist) -> [Val | KVlist] end;
+put([{keypos, Keypos}, {fill_tag, _FillTag}]) ->
+    fun (Key, Val, KVlist) when element(Keypos, Val) =:= Key -> [Val | KVlist] end;
 put([{keypos, 1}, {valpos, 2}, {fill_tag, _FillTag}]) ->
     fun (Key, Val, KVlist) -> [{Key, Val} | KVlist] end;
 put([{keypos, Keypos}, {valpos, Valpos}, {fill_tag, FillTag}]) ->

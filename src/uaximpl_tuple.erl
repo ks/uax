@@ -20,7 +20,7 @@ args(_) -> [].
 
 
 get([]) ->
-    fun (Pos, Tuple) -> uax_get:try_get(fun erlang:element/2, Pos, Tuple) end.
+    fun (Pos, Tuple) -> uax_util:try_get(fun erlang:element/2, Pos, Tuple) end.
 
 put([{none_tag, NoneTag}]) ->
     fun (Idx, Val, Tuple) -> do_put_default(Idx, Val, Tuple, NoneTag) end.
