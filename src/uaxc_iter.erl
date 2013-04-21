@@ -4,7 +4,7 @@
 
 -export([compile_keys/0, c/2]).
 
--export([eval/4]).
+-export([eval/4, mk/2]).
 
 -include("uax.hrl").
 
@@ -73,5 +73,24 @@ eval0(Iter, IterState, KeyFun, ValFun, Fun, State) ->
             end;
         done ->
             State
+    end.
+
+
+%% alternative - returns higher-level, more user friendly iterator wrapping key fun, val fun:
+mk(#uax{root = Root}, Obj) ->
+    mk(Root, Obj);
+mk(#uaxn{iter = {Iter, KeyFun, ValFun}}, Obj) ->
+    {ok, IterState0} = Iter(init, Obj),
+    {ok, fun (IterState) -> iterate(Iter, IterState, KeyFun, ValFun) end, IterState0}.
+
+iterate(Iter, IterState, KeyFun, ValFun) ->
+    case Iter(next, IterState) of
+        {ok, {PhysKey, RawVal}, IterState1} ->
+            case ValFun(RawVal) of
+                {ok, Val} -> {ok, {KeyFun(PhysKey), Val}, IterState1};
+                skip -> iterate(Iter, IterState1, KeyFun, ValFun)
+            end;
+        done ->
+            done
     end.
 

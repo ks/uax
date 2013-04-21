@@ -4,7 +4,7 @@
 
 -export([mk/1, mk/2, record_key/1]).
 
--export([new/2, get/3, put/4, del/3]).
+-export([new/2, get/3, put/4, del/3, fold/4]).
 
 -export([iter/4]).
 
@@ -43,6 +43,13 @@ put(#uaxn{} = Root, Path, Val, Obj) -> uaxc_put:eval(Root, Path, Val, Obj).
 del(#uax{root = Root}, Path, Obj) -> del(Root, Path, Obj);
 del(#uaxn{} = Root, Path, Obj) -> uaxc_del:eval(Root, Path, Obj).
 
+
+fold(#uax{root = Root}, Path, State, Obj) -> fold(Root, Path, State, Obj);
+fold(#uaxn{} = Root, Path, State, Obj) -> uax_fold:eval(Root, Path, State, Obj).
+    
+
+%%
+
 iter(#uax{root = Root}, Fun, State, Obj) -> iter(Root, Fun, State, Obj);
 iter(#uaxn{} = Root, Fun, State, Obj) -> uaxc_iter:eval(Root, Fun, State, Obj).
     
@@ -54,6 +61,4 @@ mk_fun(get, Root) -> fun (Path, Obj) -> get(Root, Path, Obj) end;
 mk_fun(put, Root) -> fun (Path, Val, Obj) -> put(Root, Path, Val, Obj) end;
 mk_fun(del, Root) -> fun (Path, Obj) -> del(Root, Path, Obj) end.
 
-                               
-                             
 
